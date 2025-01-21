@@ -50,7 +50,7 @@ class Backend:
     def __init__(self):
         chrome_options = Options()
 
-        # Устанавливаем настройки для увеличения производительности        '''
+        # Устанавливаем настройки для увеличения производительности        
 
         chrome_options.add_argument('--disable-gpu')
         chrome_options.add_argument('--no-sandbox')
@@ -228,7 +228,7 @@ class Backend:
             return self.gpt_post(prompt)
 
 
-class UI:
+class App:
     def __init__(self):
         self.backend = Backend()
 
@@ -267,33 +267,32 @@ class UI:
                 # Печатаем тект в вордовский файл 
 
                 if response:
+                    # Save the response to a backup file first
+                    timestamp = time.strftime('%Y%m%d-%H%M%S')
+                    backup_filename = f'response_backup_{timestamp}.txt'
                     
-                    # Работает криво!                                            
-                    # После нажатия на кнопку важно нажать обратно на окно ворда 
-                    # Без этого тект не вставится                                
-                    
-                    # Store the end point of the selection
-                    end_point = selection.End
-                    
-                    # Move to the end of the selection
-                    selection.Collapse(Direction=0)  # 0 means collapse to end
-                    
-                    # Insert a new line and the response
-                    selection.TypeText('\n' + response)
-                    
-                    # Optional: format the newly inserted text
-                    selection.Font.Name = word.ActiveDocument.Styles.Normal.Font.Name
-                    selection.Font.Size = word.ActiveDocument.Styles.Normal.Font.Size
+                    try:
+                        with open(backup_filename, 'w', encoding='utf-8') as backup_file:
+                            backup_file.write(response)
+                            
+                        # Try to paste into Word
+                        end_point = selection.End
+                        selection.Collapse(Direction=0)
+                        selection.TypeText('\n' + response)
+                        selection.Font.Name = word.ActiveDocument.Styles.Normal.Font.Name
+                        selection.Font.Size = word.ActiveDocument.Styles.Normal.Font.Size
+
+                    except Exception as e:
+                        messagebox.showwarning(
+                            "Warning",
+                            f"Failed to paste into Word. The response has been saved to {backup_filename}\nError: {str(e)}"
+                        )
+
             else:
                 messagebox.showinfo('Information', 'No text selected.')
                 
         except Exception as e:
             print(f'Ошибка {e}')
-
-
-class App:
-    UI()
-
 
 def main():
     App()
