@@ -1,4 +1,8 @@
+.gitignore
 ui_test.py
 request_test.py
 gpt_word.log
 app_test.py
+main.py
+config.txt
+venv/

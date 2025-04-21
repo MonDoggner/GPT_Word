@@ -221,7 +221,7 @@ class Backend:
         finally:
             try:
                 self.driver.quit()
-            except:
+            except Exception as e:
                 pass
 
     def make_request(self, prompt) -> str:
@@ -244,18 +244,10 @@ class App:
 
     def copy_selected_text_from_word(self) -> None:
         try:
-
-            # Получаем доступ к Word 
-            
             word = win32com.client.Dispatch('Word.Application')
             word.Visible = True
             selection = word.Selection
             
-            # Проверяем, есть ли выделенный текст      
-            # Если тип выделения не пустой             
-            # Копируем выделенный текст в буфер обмена 
-            # Извлекаем текст из буфера обмена         
-
             if selection.Type != 0:  
                 selection.Copy()  
                 time.sleep(0.1) 
@@ -264,18 +256,22 @@ class App:
                 self.backend.reg_gpt()
                 response = self.backend.make_request(selected_text)
                 
-                # Печатаем тект в вордовский файл 
-
                 if response:
-                    # Save the response to a backup file first
+                    # Save both text and html backups
                     timestamp = time.strftime('%Y%m%d-%H%M%S')
-                    backup_filename = f'response_backup_{timestamp}.txt'
+                    txt_filename = f'response_backup_{timestamp}.txt'
+                    html_filename = f'response_backup_{timestamp}.html'
                     
                     try:
-                        with open(backup_filename, 'w', encoding='utf-8') as backup_file:
-                            backup_file.write(response)
+                        # Save text version
+                        with open(txt_filename, 'w', encoding='utf-8') as txt_file:
+                            txt_file.write(response)
+                        
+                        # Save HTML version
+                        with open(html_filename, 'w', encoding='utf-8') as html_file:
+                            html_file.write(f'<pre>{response}</pre>')
                             
-                        # Try to paste into Word
+                        # Paste into Word
                         end_point = selection.End
                         selection.Collapse(Direction=0)
                         selection.TypeText('\n' + response)
@@ -285,14 +281,14 @@ class App:
                     except Exception as e:
                         messagebox.showwarning(
                             "Warning",
-                            f"Failed to paste into Word. The response has been saved to {backup_filename}\nError: {str(e)}"
+                            f"Response saved to {txt_filename} and {html_filename}\nError pasting to Word: {str(e)}"
                         )
 
             else:
                 messagebox.showinfo('Information', 'No text selected.')
                 
         except Exception as e:
-            print(f'Ошибка {e}')
+            print(f'Error: {e}')
 
 def main():
     App()
